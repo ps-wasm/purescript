@@ -203,6 +203,7 @@ buildMakeActions outputDir filePathMap foreigns usePrefix =
     JS -> outputFilename mn "index.js"
     JSSourceMap -> outputFilename mn "index.js.map"
     CoreFn -> outputFilename mn "corefn.json"
+    Wasm -> outputFilename mn "main.wat"
     Docs -> outputFilename mn "docs.json"
 
   getOutputTimestamp :: ModuleName -> Make (Maybe UTCTime)
@@ -253,6 +254,10 @@ buildMakeActions outputDir filePathMap foreigns usePrefix =
       let coreFnFile = targetFilename mn CoreFn
           json = CFJ.moduleToJSON Paths.version m
       lift $ writeJSONFile coreFnFile json
+    when (S.member Wasm codegenTargets) $ do
+      let wasmFile = targetFilename mn Wasm
+          wasm = TE.encodeUtf8 $ T.pack "test"
+      lift $ writeTextFile wasmFile wasm
     when (S.member JS codegenTargets) $ do
       foreignInclude <- case mn `M.lookup` foreigns of
         Just _
