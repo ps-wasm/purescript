@@ -23,11 +23,11 @@ import Control.Monad.Writer.Class (MonadWriter(..))
 
 import Data.Foldable (traverse_)
 import Data.Maybe (fromMaybe)
-import qualified Data.Map as M
-import qualified Data.Text as T
+import Data.Map qualified as M
+import Data.Text qualified as T
 
 import Language.PureScript.Crash
-import qualified Language.PureScript.Environment as E
+import Language.PureScript.Environment qualified as E
 import Language.PureScript.Errors
 import Language.PureScript.TypeChecker.Kinds (elaborateKind, instantiateKind, unifyKinds')
 import Language.PureScript.TypeChecker.Monad
@@ -162,7 +162,9 @@ unifyTypes t1 t2 = do
 -- trailing row unification variable, if appropriate.
 unifyRows :: forall m. (MonadError MultipleErrors m, MonadState CheckState m) => SourceType -> SourceType -> m ()
 unifyRows r1 r2 = sequence_ matches *> uncurry unifyTails rest where
-  (matches, rest) = alignRowsWith unifyTypes r1 r2
+  unifyTypesWithLabel l t1 t2 = withErrorMessageHint (ErrorInRowLabel l) $ unifyTypes t1 t2
+
+  (matches, rest) = alignRowsWith unifyTypesWithLabel r1 r2
 
   unifyTails :: ([RowListItem SourceAnn], SourceType) -> ([RowListItem SourceAnn], SourceType) -> m ()
   unifyTails ([], TUnknown _ u)    (sd, r)               = solveType u (rowFromList (sd, r))

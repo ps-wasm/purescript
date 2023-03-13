@@ -16,8 +16,8 @@ import Data.List (find, intersect, groupBy, sort, sortOn, (\\))
 import Data.Maybe (mapMaybe)
 import Data.Monoid (Sum(..))
 import Data.Traversable (forM)
-import qualified Data.Text as T
-import qualified Data.Map as M
+import Data.Text qualified as T
+import Data.Map qualified as M
 
 import Language.PureScript.AST.Declarations
 import Language.PureScript.AST.SourcePos
@@ -27,7 +27,7 @@ import Language.PureScript.Names
 import Language.PureScript.Sugar.Names.Common (warnDuplicateRefs)
 import Language.PureScript.Sugar.Names.Env
 import Language.PureScript.Sugar.Names.Imports
-import qualified Language.PureScript.Constants.Prim as C
+import Language.PureScript.Constants.Prim qualified as C
 
 -- |
 -- Map of module name to list of imported names from that module which have
@@ -142,7 +142,7 @@ lintImports (Module _ _ mn mdecls (Just mexports)) env usedImps = do
   -- Checks whether a module is the Prim module - used to suppress any checks
   -- made, as Prim is always implicitly imported.
   isPrim :: ModuleName -> Bool
-  isPrim = (== C.Prim)
+  isPrim = (== C.M_Prim)
 
   -- Creates a map of virtual modules mapped to all the declarations that
   -- import to that module, with the corresponding source span, import type,

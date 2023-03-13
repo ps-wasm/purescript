@@ -5,8 +5,8 @@ module TestMake where
 
 import Prelude
 
-import qualified Language.PureScript as P
-import qualified Language.PureScript.CST as CST
+import Language.PureScript qualified as P
+import Language.PureScript.CST qualified as CST
 
 import Control.Concurrent (threadDelay)
 import Control.Monad
@@ -15,10 +15,10 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent.MVar (readMVar, newMVar, modifyMVar_)
 import Data.Time.Calendar
 import Data.Time.Clock
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Set (Set)
-import qualified Data.Set as Set
-import qualified Data.Map as M
+import Data.Set qualified as Set
+import Data.Map qualified as M
 
 import System.FilePath
 import System.Directory
@@ -166,7 +166,7 @@ spec = do
           moduleContent2 = moduleContent1 <> "\ny :: Int\ny = 1"
           optsWithDocs = P.defaultOptions { P.optionsCodegenTargets = Set.fromList [P.JS, P.Docs] }
           go opts = compileWithOptions opts [modulePath] >>= assertSuccess
-          oneSecond = 10^(6::Int) -- microseconds.
+          oneSecond = 10 ^ (6::Int) -- microseconds.
 
       writeFileWithTimestamp modulePath timestampA moduleContent1
       go optsWithDocs `shouldReturn` moduleNames ["Module"]
@@ -184,7 +184,7 @@ spec = do
           moduleContent2 = moduleContent1 <> "\ny :: Int\ny = 1"
           optsCorefnOnly = P.defaultOptions { P.optionsCodegenTargets = Set.singleton P.CoreFn }
           go opts = compileWithOptions opts [modulePath] >>= assertSuccess
-          oneSecond = 10^(6::Int) -- microseconds.
+          oneSecond = 10 ^ (6::Int) -- microseconds.
 
       writeFileWithTimestamp modulePath timestampA moduleContent1
       go optsCorefnOnly `shouldReturn` moduleNames ["Module"]

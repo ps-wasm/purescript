@@ -14,9 +14,9 @@ import Control.DeepSeq (NFData)
 import Data.Functor.Identity
 
 import Data.Aeson.TH
-import qualified Data.Map as M
+import Data.Map qualified as M
 import Data.Text (Text)
-import qualified Data.List.NonEmpty as NEL
+import Data.List.NonEmpty qualified as NEL
 import GHC.Generics (Generic)
 
 import Language.PureScript.AST.Binders
@@ -32,7 +32,7 @@ import Language.PureScript.Roles
 import Language.PureScript.TypeClassDictionaries
 import Language.PureScript.Comments
 import Language.PureScript.Environment
-import qualified Language.PureScript.Constants.Prim as C
+import Language.PureScript.Constants.Prim qualified as C
 
 -- | A map of locally-bound names in scope.
 type Context = [(Ident, SourceType)]
@@ -66,6 +66,7 @@ data ErrorMessageHint
   | ErrorInModule ModuleName
   | ErrorInInstance (Qualified (ProperName 'ClassName)) [SourceType]
   | ErrorInSubsumption SourceType SourceType
+  | ErrorInRowLabel Label
   | ErrorCheckingAccessor Expr PSString
   | ErrorCheckingType Expr SourceType
   | ErrorCheckingKind SourceType SourceType
@@ -147,7 +148,7 @@ addDefaultImport (Qualified toImportAs toImport) m@(Module ss coms mn decls exps
 importPrim :: Module -> Module
 importPrim =
   let
-    primModName = C.Prim
+    primModName = C.M_Prim
   in
     addDefaultImport (Qualified (ByModuleName primModName) primModName)
       . addDefaultImport (Qualified ByNullSourcePos primModName)

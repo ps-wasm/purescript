@@ -17,14 +17,14 @@ module Language.PureScript.Ide.Error
        , prettyPrintTypeSingleLine
        ) where
 
-import           Data.Aeson
-import qualified Data.Aeson.Types as Aeson
-import qualified Data.Aeson.KeyMap as KM
-import qualified Data.Text as T
-import qualified Language.PureScript as P
-import           Language.PureScript.Errors.JSON
-import           Language.PureScript.Ide.Types   (ModuleIdent, Completion(..))
-import           Protolude
+import Data.Aeson
+import Data.Aeson.Types qualified as Aeson
+import Data.Aeson.KeyMap qualified as KM
+import Data.Text qualified as T
+import Language.PureScript qualified as P
+import Language.PureScript.Errors.JSON
+import Language.PureScript.Ide.Types (ModuleIdent, Completion(..))
+import Protolude
 
 data IdeError
     = GeneralError Text
@@ -90,7 +90,7 @@ textError :: IdeError -> Text
 textError (GeneralError msg)          = msg
 textError (NotFound ident)            = "Symbol '" <> ident <> "' not found."
 textError (ModuleNotFound ident)      = "Module '" <> ident <> "' not found."
-textError (ModuleFileNotFound ident)  = "Extern file for module " <> ident <>" could not be found"
+textError (ModuleFileNotFound ident)  = "Extern file for module " <> ident <> " could not be found"
 textError (RebuildError _ err)        = show err
 
 prettyPrintTypeSingleLine :: P.Type a -> Text

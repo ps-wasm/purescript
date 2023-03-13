@@ -2,6 +2,148 @@
 
 Notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.15.8
+
+New features:
+
+* Generated documentation now supports dark mode (#4438 by @sometimes-i-send-pull-requests)
+
+  PureScript documentation has a new dark theme available. It will
+  automatically be used based on your browser or system's color scheme
+  preferences.
+
+Bugfixes:
+
+* Fix instance deriving regression (#4432 by @rhendric)
+
+* Outputs what label the type-error occurred on when types don't match (#4411 by @FredTheDino)
+
+* Account for typed holes when checking value declarations (#4437 by @purefunctor)
+
+  The compiler now takes into account typed holes when ordering value declarations
+  for type checking, allowing more top-level values to be suggested instead of
+  being limited by reverse lexicographical ordering.
+
+  Given:
+  ```purescript
+  module Main where
+
+  newtype K = K Int
+
+  aRinku :: Int -> K
+  aRinku = K
+
+  bMaho :: K
+  bMaho = ?help 0
+
+  cMuni :: Int -> K
+  cMuni = K
+
+  dRei :: Int -> K
+  dRei _ = bMaho
+  ```
+
+  Before:
+  ```
+    Hole 'help' has the inferred type
+            
+      Int -> K
+            
+    You could substitute the hole with one of these values:
+                           
+      Main.cMuni  :: Int -> K
+      Main.K      :: Int -> K
+  ```
+
+  After:
+  ```
+    Hole 'help' has the inferred type
+            
+      Int -> K
+            
+    You could substitute the hole with one of these values:
+                            
+      Main.aRinku  :: Int -> K
+      Main.cMuni   :: Int -> K
+      Main.K       :: Int -> K
+  ```
+
+Other improvements:
+
+* Bump Stackage snapshot to lts-20.9 and GHC to 9.2.5 (#4422, #4428, and #4433 by @purefunctor, @JordanMartinez, and @andys8)
+
+Internal:
+
+* Update license/changelog scrips to latest Stack resolver (#4445 by @JordanMartinez)
+
+## 0.15.7
+
+New features:
+
+* Allow IDE module rebuilds eschewing the filesystem (#4399 by @i-am-the-slime)
+
+  This allows IDE clients to typecheck the module the user is currently typing in without modifying the output.
+  This allows for faster feedback cycles in editors and avoids producing a broken `/output` before the user actually saves the file.
+
+* Add `purs ide` dependency/imports filter (#4412 by @nwolverson)
+
+  This allows IDE tooling to filter type searches according to the imports of a given module,
+  restricting to identifiers in scope.
+
+* Shorten custom user-defined error message's prefix (#4418 by @i-am-the-slime)
+  
+  Improves clarity and gets to the relevant information faster.
+
+* The compiler can now derive instances for more types and type classes (#4420 by @rhendric)
+  
+  New type classes that the compiler can derive: 
+  - `Bifunctor`
+  - `Bifoldable`
+  - `Bitraversable`
+  - `Contravariant`
+  - `Profunctor`
+  
+  Moreover, the compiler can also use these classes when deriving
+  `Functor`, `Foldable`, and `Traversable`, enabling more instances to be derived
+  whereas before such instances would need to be written manually.
+
+Bugfixes:
+
+* Update installer to `0.3.3` to fix a few installation issues (#4425 by @JordanMartinez)
+
+Other improvements:
+
+* Improve `DuplicateDeclarationsInLet` error so that it mentions what variable names were duplicated, reporting several in separate errors as necessary. (#4405 by @MonoidMusician)
+
+* Fix various typos in documentation and source comments. (#4415 by @Deltaspace0)
+
+* Bump Stackage snapshot to 2022-11-12 and GHC to 9.2.4 (#4422 by @purefunctor)
+
+Internal:
+
+* Organize the compiler's internal constants files (#4406 by @rhendric)
+
+* Enable more GHC warnings (#4429 by @rhendric)
+
+## 0.15.6
+
+Bugfixes:
+
+* Make `FromJSON` instance for `Qualified` backwards compatible (#4403 by @ptrfrncsmrph)
+
+  Prior to #4293, `Qualified` was encoded to JSON such that
+
+  ```haskell
+  >>> encode $ Qualified Nothing "foo"
+  [null,"foo"]
+  >>> encode $ Qualified (Just $ ModuleName "A") "bar"
+  ["A","bar"]
+  ```
+
+  The type of `Qualified` has changed so that `null` no longer appears in JSON output, but for sake of backwards-compatibility with JSON that was produced prior to those changes (pre-`v0.15.2`), we need to accept `null`, which will be interpreted as `Qualified ByNullSourcePos`.
+
+* Fix extraneous qualifiers added to references to floated expressions (#4401 by @rhendric)
+
 ## 0.15.5
 
 New features:
@@ -3175,14 +3317,14 @@ The way names are resolved has now been updated in a way that may result in some
 
 Some examples:
 
-| Import statement | Exposed members |
-| --- | --- |
-| `import X` | `A`, `f` |
-| `import X as Y` | `Y.A` `Y.f` |
-| `import X (A)` | `A` |
-| `import X (A) as Y` | `Y.A` |
-| `import X hiding (f)` | `A` |
-| `import Y hiding (f) as Y` | `Y.A` |
+| Import statement           | Exposed members |
+| -------------------------- | --------------- |
+| `import X`                 | `A`, `f`        |
+| `import X as Y`            | `Y.A` `Y.f`     |
+| `import X (A)`             | `A`             |
+| `import X (A) as Y`        | `Y.A`           |
+| `import X hiding (f)`      | `A`             |
+| `import Y hiding (f) as Y` | `Y.A`           |
 
 Qualified references like `Control.Monad.Eff.Console.log` will no longer resolve unless there is a corresponding `import Control.Monad.Eff.Console as Control.Monad.Eff.Console`. Importing a module unqualified does not allow you to reference it with qualification, so `import X` does not allow references to `X.A` unless there is also an `import X as X`.
 

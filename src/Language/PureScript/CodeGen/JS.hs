@@ -18,21 +18,21 @@ import Control.Monad.Writer (MonadWriter, runWriterT, writer)
 
 import Data.Bifunctor (first)
 import Data.List ((\\), intersect)
-import qualified Data.List.NonEmpty as NEL (nonEmpty)
-import qualified Data.Foldable as F
-import qualified Data.Map as M
-import qualified Data.Set as S
+import Data.List.NonEmpty qualified as NEL (nonEmpty)
+import Data.Foldable qualified as F
+import Data.Map qualified as M
+import Data.Set qualified as S
 import Data.Maybe (fromMaybe, mapMaybe, maybeToList)
 import Data.Monoid (Any(..))
 import Data.String (fromString)
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 
 import Language.PureScript.AST.SourcePos
 import Language.PureScript.CodeGen.JS.Common as Common
 import Language.PureScript.CoreImp.AST (AST, InitializerEffects(..), everywhere, everywhereTopDownM, withSourceSpan)
-import qualified Language.PureScript.CoreImp.AST as AST
-import qualified Language.PureScript.CoreImp.Module as AST
+import Language.PureScript.CoreImp.AST qualified as AST
+import Language.PureScript.CoreImp.Module qualified as AST
 import Language.PureScript.CoreImp.Optimizer
 import Language.PureScript.CoreFn
 import Language.PureScript.CoreFn.Laziness (applyLazinessTransform)
@@ -44,7 +44,7 @@ import Language.PureScript.Names
 import Language.PureScript.Options
 import Language.PureScript.PSString (PSString, mkString)
 import Language.PureScript.Traversals (sndM)
-import qualified Language.PureScript.Constants.Prim as C
+import Language.PureScript.Constants.Prim qualified as C
 
 import System.FilePath.Posix ((</>))
 
@@ -52,7 +52,7 @@ import System.FilePath.Posix ((</>))
 -- module.
 moduleToJs
   :: forall m
-   . (Monad m, MonadReader Options m, MonadSupply m, MonadError MultipleErrors m)
+   . (MonadReader Options m, MonadSupply m, MonadError MultipleErrors m)
   => Module Ann
   -> Maybe PSString
   -> m AST.Module
@@ -232,7 +232,7 @@ moduleToJs (Module _ coms mn _ imps exps reExps foreigns decls) foreignInclude =
 
 moduleBindToJs
   :: forall m
-   . (Monad m, MonadReader Options m, MonadSupply m, MonadWriter Any m, MonadError MultipleErrors m)
+   . (MonadReader Options m, MonadSupply m, MonadWriter Any m, MonadError MultipleErrors m)
   => ModuleName
   -> Bind Ann
   -> m [AST]
@@ -393,7 +393,7 @@ moduleBindToJs mn = bindToJs
   -- | Generate code in the simplified JavaScript intermediate representation for a reference to a
   -- variable that may have a qualified name.
   qualifiedToJS :: (a -> Ident) -> Qualified a -> AST
-  qualifiedToJS f (Qualified (ByModuleName C.Prim) a) = AST.Var Nothing . runIdent $ f a
+  qualifiedToJS f (Qualified (ByModuleName C.M_Prim) a) = AST.Var Nothing . runIdent $ f a
   qualifiedToJS f (Qualified (ByModuleName mn') a) | mn /= mn' = AST.ModuleAccessor Nothing mn' . mkString . T.concatMap identCharToText . runIdent $ f a
   qualifiedToJS f (Qualified _ a) = AST.Var Nothing $ identToJs (f a)
 
