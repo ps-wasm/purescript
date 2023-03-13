@@ -8,9 +8,9 @@ import Prelude
 import Control.Monad.Writer.Class
 
 import Data.Maybe (mapMaybe)
-import qualified Data.Set as S
+import Data.Set qualified as S
 import Data.Text (Text)
-import qualified Data.Text as Text
+import Data.Text qualified as Text
 import Control.Monad ((<=<))
 
 import Language.PureScript.AST
@@ -19,7 +19,7 @@ import Language.PureScript.Linter.Exhaustive as L
 import Language.PureScript.Linter.Imports as L
 import Language.PureScript.Names
 import Language.PureScript.Types
-import qualified Language.PureScript.Constants.Prelude as C
+import Language.PureScript.Constants.Libs qualified as C
 
 -- | Lint the PureScript AST.
 -- |
@@ -162,7 +162,7 @@ lintUnused (Module modSS _ mn modDecls exports) =
   thisModuleRef _ = False
 
   rebindable :: S.Set Ident
-  rebindable = S.fromList [ Ident C.bind, Ident C.discard ]
+  rebindable = S.fromList [ Ident C.S_bind, Ident C.S_discard ]
 
   getDeclIdent :: Declaration -> Maybe Ident
   getDeclIdent = getIdentName <=< declName

@@ -9,13 +9,13 @@ import Control.Monad.State (StateT, modify, get)
 
 import Data.List (elemIndices, intersperse)
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 
 import Language.PureScript.AST (SourcePos(..), SourceSpan(..), nullSourceSpan)
 import Language.PureScript.CST.Lexer (isUnquotedKey)
 
 import Text.PrettyPrint.Boxes hiding ((<>))
-import qualified Text.PrettyPrint.Boxes as Box
+import Text.PrettyPrint.Boxes qualified as Box
 
 parensT :: Text -> Text
 parensT s = "(" <> s <> ")"
@@ -96,8 +96,8 @@ bumpPos :: SourcePos -> SMap -> SMap
 bumpPos p (SMap f s g) = SMap f s $ p `addPos` g
 
 addPos :: SourcePos -> SourcePos -> SourcePos
-addPos (SourcePos n m) (SourcePos 0 m') = SourcePos n (m+m')
-addPos (SourcePos n _) (SourcePos n' m') = SourcePos (n+n') m'
+addPos (SourcePos n m) (SourcePos 0 m') = SourcePos n (m + m')
+addPos (SourcePos n _) (SourcePos n' m') = SourcePos (n + n') m'
 
 
 data PrinterState = PrinterState { indent :: Int }

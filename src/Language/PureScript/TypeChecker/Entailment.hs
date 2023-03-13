@@ -7,6 +7,7 @@ module Language.PureScript.TypeChecker.Entailment
   , replaceTypeClassDictionaries
   , newDictionaries
   , entails
+  , findDicts
   ) where
 
 import Prelude
@@ -24,13 +25,13 @@ import Data.Function (on)
 import Data.Functor (($>))
 import Data.List (delete, findIndices, minimumBy, nubBy, sortOn, tails)
 import Data.Maybe (catMaybes, fromMaybe, listToMaybe, mapMaybe)
-import qualified Data.Map as M
-import qualified Data.Set as S
+import Data.Map qualified as M
+import Data.Set qualified as S
 import Data.Traversable (for)
 import Data.Text (Text, stripPrefix, stripSuffix)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.List.NonEmpty (NonEmpty(..))
-import qualified Data.List.NonEmpty as NEL
+import Data.List.NonEmpty qualified as NEL
 
 import Language.PureScript.AST
 import Language.PureScript.Crash
@@ -47,8 +48,8 @@ import Language.PureScript.TypeClassDictionaries
 import Language.PureScript.Types
 import Language.PureScript.Label (Label(..))
 import Language.PureScript.PSString (PSString, mkString, decodeString)
-import qualified Language.PureScript.Constants.Prelude as C
-import qualified Language.PureScript.Constants.Prim as C
+import Language.PureScript.Constants.Libs qualified as C
+import Language.PureScript.Constants.Prim qualified as C
 
 -- | Describes what sort of dictionary to generate for type class instances
 data Evidence
@@ -77,9 +78,9 @@ asExpression = \case
   ReflectableString s -> Literal NullSourceSpan $ StringLiteral s
   ReflectableBoolean b -> Literal NullSourceSpan $ BooleanLiteral b
   ReflectableOrdering o -> Constructor NullSourceSpan $ case o of
-    LT -> C.LT
-    EQ -> C.EQ
-    GT -> C.GT
+    LT -> C.C_LT
+    EQ -> C.C_EQ
+    GT -> C.C_GT
 
 -- | Extract the identifier of a named instance
 namedInstanceIdentifier :: Evidence -> Maybe (Qualified Ident)
@@ -93,6 +94,9 @@ type TypeClassDict = TypeClassDictionaryInScope Evidence
 type InstanceContext = M.Map QualifiedBy
                          (M.Map (Qualified (ProperName 'ClassName))
                            (M.Map (Qualified Ident) (NonEmpty NamedDict)))
+
+findDicts :: InstanceContext -> Qualified (ProperName 'ClassName) -> QualifiedBy -> [TypeClassDict]
+findDicts ctx cn = fmap (fmap NamedInstance) . foldMap NEL.toList . foldMap M.elems . (M.lookup cn <=< flip M.lookup ctx)
 
 -- | A type substitution which makes an instance head match a list of types.
 --
@@ -224,11 +228,8 @@ entails SolverOptions{..} constraint context hints =
     ctorModules (KindedType _ ty _) = ctorModules ty
     ctorModules _ = Nothing
 
-    findDicts :: InstanceContext -> Qualified (ProperName 'ClassName) -> QualifiedBy -> [TypeClassDict]
-    findDicts ctx cn = fmap (fmap NamedInstance) . foldMap NEL.toList . foldMap M.elems . (M.lookup cn <=< flip M.lookup ctx)
-
     valUndefined :: Expr
-    valUndefined = Var nullSourceSpan (Qualified (ByModuleName C.Prim) (Ident C.undefined))
+    valUndefined = Var nullSourceSpan C.I_undefined
 
     solve :: SourceConstraint -> WriterT (Any, [(Ident, InstanceContext, SourceConstraint)]) (StateT InstanceContext m) Expr
     solve = go 0 hints
@@ -460,9 +461,9 @@ entails SolverOptions{..} constraint context hints =
     solveSymbolCompare :: [SourceType] -> Maybe [TypeClassDict]
     solveSymbolCompare [arg0@(TypeLevelString _ lhs), arg1@(TypeLevelString _ rhs), _] =
       let ordering = case compare lhs rhs of
-                  LT -> C.orderingLT
-                  EQ -> C.orderingEQ
-                  GT -> C.orderingGT
+                  LT -> C.LT
+                  EQ -> C.EQ
+                  GT -> C.GT
           args' = [arg0, arg1, srcTypeConstructor ordering]
       in Just [TypeClassDictionaryInScope Nothing 0 EmptyClassInstance [] C.SymbolCompare [] [] args' Nothing Nothing]
     solveSymbolCompare _ = Nothing
@@ -526,11 +527,11 @@ entails SolverOptions{..} constraint context hints =
         TypeLevelInt _ i -> pure (ReflectableInt i, tyInt)
         TypeLevelString _ s -> pure (ReflectableString s, tyString)
         TypeConstructor _ n
-          | n == C.booleanTrue -> pure (ReflectableBoolean True, tyBoolean)
-          | n == C.booleanFalse -> pure (ReflectableBoolean False, tyBoolean)
-          | n == C.orderingLT -> pure (ReflectableOrdering LT, srcTypeConstructor C.Ordering)
-          | n == C.orderingEQ -> pure (ReflectableOrdering EQ, srcTypeConstructor C.Ordering)
-          | n == C.orderingGT -> pure (ReflectableOrdering GT, srcTypeConstructor C.Ordering)
+          | n == C.True -> pure (ReflectableBoolean True, tyBoolean)
+          | n == C.False -> pure (ReflectableBoolean False, tyBoolean)
+          | n == C.LT -> pure (ReflectableOrdering LT, srcTypeConstructor C.Ordering)
+          | n == C.EQ -> pure (ReflectableOrdering EQ, srcTypeConstructor C.Ordering)
+          | n == C.GT -> pure (ReflectableOrdering GT, srcTypeConstructor C.Ordering)
         _ -> Nothing
       pure [TypeClassDictionaryInScope Nothing 0 (ReflectableInstance ref) [] C.Reflectable [] [] [typeLevel, typ] Nothing Nothing]
     solveReflectable _ = Nothing
@@ -554,9 +555,9 @@ entails SolverOptions{..} constraint context hints =
     solveIntCompare :: InstanceContext -> [SourceType] -> Maybe [TypeClassDict]
     solveIntCompare _ [arg0@(TypeLevelInt _ a), arg1@(TypeLevelInt _ b), _] =
       let ordering = case compare a b of
-            EQ -> C.orderingEQ
-            LT -> C.orderingLT
-            GT -> C.orderingGT
+            EQ -> C.EQ
+            LT -> C.LT
+            GT -> C.GT
           args' = [arg0, arg1, srcTypeConstructor ordering]
       in pure [TypeClassDictionaryInScope Nothing 0 EmptyClassInstance [] C.IntCompare [] [] args' Nothing Nothing]
     solveIntCompare ctx args@[a, b, _] = do
@@ -750,7 +751,7 @@ matches deps TypeClassDictionaryInScope{..} tys =
     typeHeadsAreEqual r1@RCons{} r2@RCons{} =
         foldr both (uncurry go rest) common
       where
-        (common, rest) = alignRowsWith typeHeadsAreEqual r1 r2
+        (common, rest) = alignRowsWith (const typeHeadsAreEqual) r1 r2
 
         go :: ([RowListItem a], Type a) -> ([RowListItem a], Type a) -> (Matched (), Matching [Type a])
         go (l,  KindedType _ t1 _) (r,  t2)                            = go (l, t1) (r, t2)
@@ -795,7 +796,7 @@ matches deps TypeClassDictionaryInScope{..} tys =
       typesAreEqual (KindApp _ h1 t1)      (KindApp _ h2 t2)      = typesAreEqual h1 h2 <> typesAreEqual t1 t2
       typesAreEqual (REmpty _)             (REmpty _)             = Match ()
       typesAreEqual r1                     r2                     | isRCons r1 || isRCons r2 =
-          let (common, rest) = alignRowsWith typesAreEqual r1 r2
+          let (common, rest) = alignRowsWith (const typesAreEqual) r1 r2
           in fold common <> uncurry go rest
         where
           go :: ([RowListItem a], Type a) -> ([RowListItem a], Type a) -> Matched ()

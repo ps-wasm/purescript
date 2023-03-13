@@ -39,16 +39,16 @@ import Data.Bitraversable (bitraverse)
 import Data.Foldable (for_, traverse_)
 import Data.Function (on)
 import Data.Functor (($>))
-import qualified Data.IntSet as IS
+import Data.IntSet qualified as IS
 import Data.List (nubBy, sortOn, (\\))
-import qualified Data.Map as M
+import Data.Map qualified as M
 import Data.Maybe (fromJust, fromMaybe)
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Traversable (for)
 
 import Language.PureScript.Crash
-import qualified Language.PureScript.Environment as E
+import Language.PureScript.Environment qualified as E
 import Language.PureScript.Errors
 import Language.PureScript.Names
 import Language.PureScript.TypeChecker.Monad
@@ -419,6 +419,7 @@ unifyKindsWithFailure
   -> m ()
 unifyKindsWithFailure onFailure = go
   where
+  goWithLabel l t1 t2 = withErrorMessageHint (ErrorInRowLabel l) $ go t1 t2
   go = curry $ \case
     (TypeApp _ p1 p2, TypeApp _ p3 p4) -> do
       go p1 p3
@@ -444,7 +445,7 @@ unifyKindsWithFailure onFailure = go
       onFailure w1 w2
 
   unifyRows r1 r2 = do
-    let (matches, rest) = alignRowsWith go r1 r2
+    let (matches, rest) = alignRowsWith goWithLabel r1 r2
     sequence_ matches
     unifyTails rest
 
@@ -910,7 +911,7 @@ checkKindDeclaration _ ty = do
   checkQuantification finalTy
   checkValidKind finalTy
   where
-  -- When expanding type synoyms and generalizing, we need to generate more
+  -- When expanding type synonyms and generalizing, we need to generate more
   -- unique names so that they don't clash or shadow other names, or can
   -- be referenced (easily).
   freshVar arg = (arg <>) . T.pack . show <$> fresh

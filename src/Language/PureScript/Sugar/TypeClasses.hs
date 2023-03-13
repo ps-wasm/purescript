@@ -10,30 +10,30 @@ module Language.PureScript.Sugar.TypeClasses
 
 import Prelude
 
-import           Control.Arrow (first, second)
-import           Control.Monad.Error.Class (MonadError(..))
-import           Control.Monad.State
-import           Control.Monad.Supply.Class
-import           Data.Graph
-import           Data.List (find, partition)
-import           Data.List.NonEmpty (nonEmpty)
-import qualified Data.Map as M
-import           Data.Maybe (catMaybes, mapMaybe, isJust)
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Set as S
-import           Data.Text (Text)
-import           Data.Traversable (for)
-import qualified Language.PureScript.Constants.Prim as C
-import           Language.PureScript.Crash
-import           Language.PureScript.Environment
-import           Language.PureScript.Errors hiding (isExported, nonEmpty)
-import           Language.PureScript.Externs
-import           Language.PureScript.Label (Label(..))
-import           Language.PureScript.Names
-import           Language.PureScript.PSString (mkString)
-import           Language.PureScript.Sugar.CaseDeclarations
-import           Language.PureScript.TypeClassDictionaries (superclassName)
-import           Language.PureScript.Types
+import Control.Arrow (first, second)
+import Control.Monad.Error.Class (MonadError(..))
+import Control.Monad.State
+import Control.Monad.Supply.Class
+import Data.Graph
+import Data.List (find, partition)
+import Data.List.NonEmpty (nonEmpty)
+import Data.Map qualified as M
+import Data.Maybe (catMaybes, mapMaybe, isJust)
+import Data.List.NonEmpty qualified as NEL
+import Data.Set qualified as S
+import Data.Text (Text)
+import Data.Traversable (for)
+import Language.PureScript.Constants.Prim qualified as C
+import Language.PureScript.Crash
+import Language.PureScript.Environment
+import Language.PureScript.Errors hiding (isExported, nonEmpty)
+import Language.PureScript.Externs
+import Language.PureScript.Label (Label(..))
+import Language.PureScript.Names
+import Language.PureScript.PSString (mkString)
+import Language.PureScript.Sugar.CaseDeclarations
+import Language.PureScript.TypeClassDictionaries (superclassName)
+import Language.PureScript.Types
 
 type MemberMap = M.Map (ModuleName, ProperName 'ClassName) TypeClassData
 
@@ -53,13 +53,13 @@ desugarTypeClasses externs = flip evalStateT initialState . desugarModule
   initialState :: MemberMap
   initialState =
     mconcat
-      [ M.mapKeys (qualify C.Prim) primClasses
-      , M.mapKeys (qualify C.PrimCoerce) primCoerceClasses
-      , M.mapKeys (qualify C.PrimRow) primRowClasses
-      , M.mapKeys (qualify C.PrimRowList) primRowListClasses
-      , M.mapKeys (qualify C.PrimSymbol) primSymbolClasses
-      , M.mapKeys (qualify C.PrimInt) primIntClasses
-      , M.mapKeys (qualify C.PrimTypeError) primTypeErrorClasses
+      [ M.mapKeys (qualify C.M_Prim) primClasses
+      , M.mapKeys (qualify C.M_Prim_Coerce) primCoerceClasses
+      , M.mapKeys (qualify C.M_Prim_Row) primRowClasses
+      , M.mapKeys (qualify C.M_Prim_RowList) primRowListClasses
+      , M.mapKeys (qualify C.M_Prim_Symbol) primSymbolClasses
+      , M.mapKeys (qualify C.M_Prim_Int) primIntClasses
+      , M.mapKeys (qualify C.M_Prim_TypeError) primTypeErrorClasses
       , M.fromList (externs >>= \ExternsFile{..} -> mapMaybe (fromExternsDecl efModuleName) efDeclarations)
       ]
 
