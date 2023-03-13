@@ -256,7 +256,7 @@ buildMakeActions outputDir filePathMap foreigns usePrefix =
       lift $ writeJSONFile coreFnFile json
     when (S.member Wasm codegenTargets) $ do
       let wasmFile = targetFilename mn Wasm
-          wasm = TE.encodeUtf8 $ T.pack "test"
+          wasm = TE.encodeUtf8 $ T.pack $ show m
       lift $ writeTextFile wasmFile wasm
     when (S.member JS codegenTargets) $ do
       foreignInclude <- case mn `M.lookup` foreigns of
